@@ -1,9 +1,25 @@
 # User exclusions
 *.md
 !DEPLOYMENT*.md
+!README.md
+
+# Environment & Secrets (CRITICAL - never commit these)
 .env
+.env.*
 *.env
 **/.env
+**/.env.*
+.env.local
+.env.development
+.env.production
+.env.render
+server/.env
+server/.env.*
+*.secret
+*.key
+**/secrets/
+credentials.json
+service-account*.json
 
 # Data
 *.db
