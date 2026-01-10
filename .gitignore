@@ -1,5 +1,6 @@
 # User exclusions
 *.md
+!DEPLOYMENT.md
 .env
 *.env
 **/.env

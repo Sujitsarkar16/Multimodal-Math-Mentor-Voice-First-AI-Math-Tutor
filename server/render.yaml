@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: math-mentor-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DEFAULT_LLM_MODEL
+        value: gemini-2.0-flash-exp
+      - key: DEFAULT_TEMPERATURE
+        value: 0.2
+      - key: MAX_OUTPUT_TOKENS
+        value: 2000
+      - key: ENABLE_GUARDRAILS
+        value: true
+      - key: MAX_RETRIES
+        value: 3
+      - key: USE_LANGCHAIN_REACT
+        value: true
+      - key: OCR_CONFIDENCE_THRESHOLD
+        value: 0.75
+      - key: ASR_CONFIDENCE_THRESHOLD
+        value: 0.75
+      - key: VERIFIER_CONFIDENCE_THRESHOLD
+        value: 0.75
+      - key: PARSER_AMBIGUITY_THRESHOLD
+        value: 1
+      - key: EMBEDDING_MODEL
+        value: models/embedding-001
+      - key: TOP_K_RESULTS
+        value: 5
+      - key: SIMILARITY_THRESHOLD
+        value: 0.75
+      - key: APP_NAME
+        value: Math_Mentor
+      - key: APP_VERSION
+        value: 2.0.0
+    healthCheckPath: /health
