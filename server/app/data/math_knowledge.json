@@ -1,0 +1,355 @@
+[
+    {
+        "id": "algebra_quadratic_formula",
+        "content": "The quadratic formula solves equations of the form ax² + bx + c = 0. Solution: x = (-b ± √(b² - 4ac)) / (2a). The discriminant D = b² - 4ac determines the nature of roots: D > 0 means two real roots, D = 0 means one repeated root, D < 0 means complex conjugate roots.",
+        "metadata": {
+            "topic": "algebra",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "quadratic",
+                "roots",
+                "discriminant"
+            ]
+        }
+    },
+    {
+        "id": "algebra_factoring_patterns",
+        "content": "Common factoring patterns: (a+b)² = a² + 2ab + b², (a-b)² = a² - 2ab + b², a² - b² = (a+b)(a-b), a³ + b³ = (a+b)(a² - ab + b²), a³ - b³ = (a-b)(a² + ab + b²). Always look for common factors first before applying these patterns.",
+        "metadata": {
+            "topic": "algebra",
+            "type": "formula",
+            "difficulty": "easy",
+            "tags": [
+                "factoring",
+                "polynomials",
+                "patterns"
+            ]
+        }
+    },
+    {
+        "id": "algebra_completing_square",
+        "content": "Completing the square: To convert ax² + bx + c to vertex form a(x-h)² + k: 1) Factor out 'a' from x terms. 2) Take half of b/a, square it. 3) Add and subtract this inside parentheses. 4) Simplify. Example: x² + 6x + 5 = (x² + 6x + 9) - 9 + 5 = (x+3)² - 4.",
+        "metadata": {
+            "topic": "algebra",
+            "type": "technique",
+            "difficulty": "medium",
+            "tags": [
+                "quadratic",
+                "completing square",
+                "vertex form"
+            ]
+        }
+    },
+    {
+        "id": "calculus_derivative_rules",
+        "content": "Basic derivative rules: d/dx[xⁿ] = nxⁿ⁻¹ (power rule), d/dx[eˣ] = eˣ, d/dx[ln(x)] = 1/x, d/dx[sin(x)] = cos(x), d/dx[cos(x)] = -sin(x), d/dx[tan(x)] = sec²(x). Product rule: (fg)' = f'g + fg'. Quotient rule: (f/g)' = (f'g - fg')/g². Chain rule: d/dx[f(g(x))] = f'(g(x))·g'(x).",
+        "metadata": {
+            "topic": "calculus",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "derivatives",
+                "differentiation",
+                "rules"
+            ]
+        }
+    },
+    {
+        "id": "calculus_integration_basic",
+        "content": "Basic integration formulas: ∫xⁿdx = xⁿ⁺¹/(n+1) + C for n≠-1, ∫(1/x)dx = ln|x| + C, ∫eˣdx = eˣ + C, ∫sin(x)dx = -cos(x) + C, ∫cos(x)dx = sin(x) + C, ∫sec²(x)dx = tan(x) + C. Remember to add constant of integration C for indefinite integrals.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "integration",
+                "antiderivatives",
+                "formulas"
+            ]
+        }
+    },
+    {
+        "id": "calculus_limits_techniques",
+        "content": "Limit evaluation techniques: 1) Direct substitution if continuous. 2) Factor and cancel for 0/0 forms. 3) Rationalize numerator/denominator for radicals. 4) L'Hôpital's rule for 0/0 or ∞/∞: lim f/g = lim f'/g'. 5) Standard limits: lim(x→0) sin(x)/x = 1, lim(x→∞) (1+1/x)ˣ = e.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "technique",
+            "difficulty": "medium",
+            "tags": [
+                "limits",
+                "l'hopital",
+                "indeterminate forms"
+            ]
+        }
+    },
+    {
+        "id": "calculus_definite_integral_properties",
+        "content": "Properties of definite integrals: ∫[a,b] f(x)dx = -∫[b,a] f(x)dx. ∫[a,a] f(x)dx = 0. ∫[a,b] f(x)dx = ∫[a,c] f(x)dx + ∫[c,b] f(x)dx. King's property: ∫[0,a] f(x)dx = ∫[0,a] f(a-x)dx. For even function f(-x)=f(x): ∫[-a,a] f(x)dx = 2∫[0,a] f(x)dx. For odd function: ∫[-a,a] f(x)dx = 0.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "formula",
+            "difficulty": "hard",
+            "tags": [
+                "definite integrals",
+                "properties",
+                "kings property"
+            ]
+        }
+    },
+    {
+        "id": "probability_bayes_theorem",
+        "content": "Bayes' Theorem: P(A|B) = P(B|A)·P(A) / P(B). Alternatively: P(A|B) = P(B|A)·P(A) / [P(B|A)·P(A) + P(B|A')·P(A')]. Used to update probability estimates given new evidence. Remember: P(A|B) is posterior, P(A) is prior, P(B|A) is likelihood.",
+        "metadata": {
+            "topic": "probability",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "bayes",
+                "conditional probability",
+                "posterior"
+            ]
+        }
+    },
+    {
+        "id": "probability_combinations_permutations",
+        "content": "Permutations (order matters): P(n,r) = n!/(n-r)! Combinations (order doesn't matter): C(n,r) = n!/[r!(n-r)!] = nCr. Key formulas: nCr = nC(n-r), nC0 = nCn = 1, nC1 = n. For arranging n objects with repetitions: n!/[n₁!·n₂!·...·nₖ!].",
+        "metadata": {
+            "topic": "probability",
+            "type": "formula",
+            "difficulty": "easy",
+            "tags": [
+                "combinations",
+                "permutations",
+                "counting"
+            ]
+        }
+    },
+    {
+        "id": "probability_distributions",
+        "content": "Common distributions: Binomial P(X=k) = C(n,k)·pᵏ·(1-p)ⁿ⁻ᵏ, mean=np, var=np(1-p). Poisson P(X=k) = e⁻λ·λᵏ/k!, mean=var=λ. Normal: f(x) = (1/σ√2π)e^(-(x-μ)²/2σ²), 68-95-99.7 rule for 1,2,3 standard deviations. Expected value E[X] = Σxᵢ·P(xᵢ).",
+        "metadata": {
+            "topic": "probability",
+            "type": "formula",
+            "difficulty": "hard",
+            "tags": [
+                "binomial",
+                "poisson",
+                "normal",
+                "distributions"
+            ]
+        }
+    },
+    {
+        "id": "linear_algebra_matrix_operations",
+        "content": "Matrix operations: Addition/subtraction requires same dimensions, done element-wise. Multiplication: (m×n)·(n×p) = (m×p), element Cᵢⱼ = Σₖ Aᵢₖ·Bₖⱼ. Matrix multiplication is NOT commutative: AB ≠ BA. Transpose: (AB)ᵀ = BᵀAᵀ. Inverse: (AB)⁻¹ = B⁻¹A⁻¹.",
+        "metadata": {
+            "topic": "linear_algebra",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "matrices",
+                "multiplication",
+                "transpose"
+            ]
+        }
+    },
+    {
+        "id": "linear_algebra_determinants",
+        "content": "Determinants: 2×2 matrix |a b; c d| = ad - bc. 3×3: expand along row/column using cofactors. Properties: det(AB) = det(A)·det(B), det(Aᵀ) = det(A), det(A⁻¹) = 1/det(A). Row operations: swapping rows changes sign, multiplying row by k multiplies det by k, adding scalar×row to another doesn't change det. det=0 means matrix is singular (no inverse).",
+        "metadata": {
+            "topic": "linear_algebra",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "determinants",
+                "matrices",
+                "singular"
+            ]
+        }
+    },
+    {
+        "id": "linear_algebra_systems",
+        "content": "Solving systems of linear equations: Use Gaussian elimination to get row echelon form. For Ax=b: unique solution if det(A)≠0, no solution if inconsistent equations, infinite solutions if fewer independent equations than variables. Cramer's rule: xᵢ = det(Aᵢ)/det(A) where Aᵢ has column i replaced by b.",
+        "metadata": {
+            "topic": "linear_algebra",
+            "type": "technique",
+            "difficulty": "medium",
+            "tags": [
+                "systems",
+                "gaussian elimination",
+                "cramers rule"
+            ]
+        }
+    },
+    {
+        "id": "trigonometry_identities",
+        "content": "Fundamental identities: sin²θ + cos²θ = 1, 1 + tan²θ = sec²θ, 1 + cot²θ = csc²θ. Double angle: sin(2θ) = 2sinθcosθ, cos(2θ) = cos²θ - sin²θ = 2cos²θ - 1 = 1 - 2sin²θ. Sum formulas: sin(A±B) = sinAcosB ± cosAsinB, cos(A±B) = cosAcosB ∓ sinAsinB.",
+        "metadata": {
+            "topic": "trigonometry",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "identities",
+                "double angle",
+                "sum formulas"
+            ]
+        }
+    },
+    {
+        "id": "mistake_sign_errors",
+        "content": "Common mistake: Sign errors in algebra. Watch for: distributing negatives incorrectly -(a+b) = -a-b not -a+b, subtracting parentheses (a)-(b+c) = a-b-c, squaring negative numbers (-3)² = 9 but -3² = -9, moving terms across equals sign changes sign. Always double-check signs at each step.",
+        "metadata": {
+            "topic": "common_mistakes",
+            "type": "pitfall",
+            "difficulty": "easy",
+            "tags": [
+                "sign errors",
+                "negatives",
+                "algebra"
+            ]
+        }
+    },
+    {
+        "id": "mistake_exponent_rules",
+        "content": "Common mistake: Exponent rules. Remember: aᵐ·aⁿ = aᵐ⁺ⁿ (same base only!), (ab)ⁿ = aⁿbⁿ, (aᵐ)ⁿ = aᵐⁿ, a⁰ = 1, a⁻ⁿ = 1/aⁿ. Common errors: (a+b)² ≠ a²+b² (must expand), aᵐ·bⁿ ≠ (ab)ᵐ⁺ⁿ (bases must match), √(a²+b²) ≠ a+b.",
+        "metadata": {
+            "topic": "common_mistakes",
+            "type": "pitfall",
+            "difficulty": "easy",
+            "tags": [
+                "exponents",
+                "powers",
+                "algebra"
+            ]
+        }
+    },
+    {
+        "id": "mistake_domain_restrictions",
+        "content": "Common mistake: Ignoring domain restrictions. Check for: division by zero (denominator ≠ 0), square roots of negatives (radicand ≥ 0 for real), logarithms (argument > 0), inverse trig (restricted domains). When solving, verify solutions don't violate domain. Lost solutions from squaring both sides - always verify!",
+        "metadata": {
+            "topic": "common_mistakes",
+            "type": "pitfall",
+            "difficulty": "medium",
+            "tags": [
+                "domain",
+                "restrictions",
+                "verification"
+            ]
+        }
+    },
+    {
+        "id": "template_linear_equation",
+        "content": "Solving linear equation ax + b = c: Step 1) Identify the equation form. Step 2) Subtract b from both sides: ax = c - b. Step 3) Divide by a (need a ≠ 0): x = (c-b)/a. Step 4) Verify by substituting back. Example: 3x + 5 = 14 → 3x = 9 → x = 3. Check: 3(3)+5 = 14 ✓",
+        "metadata": {
+            "topic": "algebra",
+            "type": "template",
+            "difficulty": "easy",
+            "tags": [
+                "linear equation",
+                "solving",
+                "template"
+            ]
+        }
+    },
+    {
+        "id": "template_optimization",
+        "content": "Optimization problem template: Step 1) Define variable and constraint. Step 2) Express quantity to optimize in terms of one variable. Step 3) Take derivative and set to zero. Step 4) Solve for critical points. Step 5) Use second derivative test or boundary check. Step 6) Verify answer makes sense in context.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "template",
+            "difficulty": "hard",
+            "tags": [
+                "optimization",
+                "maximum",
+                "minimum",
+                "template"
+            ]
+        }
+    },
+    {
+        "id": "template_probability_word",
+        "content": "Probability word problem template: Step 1) Define sample space and events clearly. Step 2) Identify if replacement/order matters. Step 3) Choose counting method: permutation vs combination. Step 4) Count favorable outcomes. Step 5) Count total outcomes. Step 6) P = favorable/total. Verify 0 ≤ P ≤ 1.",
+        "metadata": {
+            "topic": "probability",
+            "type": "template",
+            "difficulty": "medium",
+            "tags": [
+                "word problems",
+                "counting",
+                "template"
+            ]
+        }
+    },
+    {
+        "id": "constraint_units",
+        "content": "Unit/dimension checking: Always verify units match. For physics: F=ma (Newton = kg·m/s²), E=mc² (Joule = kg·m²/s²). In pure math: degrees vs radians (trig functions use radians!), percentages as decimals. When mixing units, convert first. Answer should have sensible units for the problem context.",
+        "metadata": {
+            "topic": "verification",
+            "type": "constraint",
+            "difficulty": "easy",
+            "tags": [
+                "units",
+                "dimensions",
+                "verification"
+            ]
+        }
+    },
+    {
+        "id": "calculus_integration_substitution",
+        "content": "Integration by substitution (u-substitution): For ∫f(g(x))·g'(x)dx, let u = g(x), du = g'(x)dx. Transform to ∫f(u)du, integrate, substitute back. Example: ∫2x·cos(x²)dx, let u=x², du=2xdx, gives ∫cos(u)du = sin(u) + C = sin(x²) + C. For definite integrals, change limits when substituting.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "technique",
+            "difficulty": "medium",
+            "tags": [
+                "integration",
+                "substitution",
+                "u-sub"
+            ]
+        }
+    },
+    {
+        "id": "calculus_integration_parts",
+        "content": "Integration by parts: ∫u·dv = uv - ∫v·du. LIATE rule for choosing u (in order): Logarithmic, Inverse trig, Algebraic, Trigonometric, Exponential. Example: ∫x·eˣdx, u=x, dv=eˣdx, so du=dx, v=eˣ. Result: xeˣ - ∫eˣdx = xeˣ - eˣ + C = eˣ(x-1) + C.",
+        "metadata": {
+            "topic": "calculus",
+            "type": "technique",
+            "difficulty": "hard",
+            "tags": [
+                "integration",
+                "by parts",
+                "LIATE"
+            ]
+        }
+    },
+    {
+        "id": "algebra_logarithm_rules",
+        "content": "Logarithm rules: log(xy) = log(x) + log(y), log(x/y) = log(x) - log(y), log(xⁿ) = n·log(x), log_a(a) = 1, log_a(1) = 0. Change of base: log_b(x) = ln(x)/ln(b). For solving: if log(f(x)) = c, then f(x) = 10^c. Always check solution doesn't make log argument negative or zero.",
+        "metadata": {
+            "topic": "algebra",
+            "type": "formula",
+            "difficulty": "medium",
+            "tags": [
+                "logarithms",
+                "log rules",
+                "change of base"
+            ]
+        }
+    },
+    {
+        "id": "geometry_coordinate",
+        "content": "Coordinate geometry formulas: Distance = √[(x₂-x₁)² + (y₂-y₁)²]. Midpoint = ((x₁+x₂)/2, (y₁+y₂)/2). Slope m = (y₂-y₁)/(x₂-x₁). Line equation: y - y₁ = m(x - x₁). Parallel lines have equal slopes. Perpendicular lines: m₁·m₂ = -1. Circle: (x-h)² + (y-k)² = r² with center (h,k).",
+        "metadata": {
+            "topic": "geometry",
+            "type": "formula",
+            "difficulty": "easy",
+            "tags": [
+                "coordinate",
+                "distance",
+                "slope",
+                "line"
+            ]
+        }
+    }
+]
