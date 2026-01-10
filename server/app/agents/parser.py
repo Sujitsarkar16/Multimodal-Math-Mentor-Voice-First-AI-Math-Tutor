@@ -7,6 +7,7 @@ from app.agents.base import BaseAgent
 from app.agents.models import ParserInput, ParserOutput
 from app.llm.client import get_llm_client
 from app.core.exceptions import ParsingError
+from app.settings import settings
 
 
 class ParserAgent(BaseAgent):
@@ -86,17 +87,32 @@ Systematically extract:
             )
             
             # Validate and construct output
+            ambiguities = response.get("ambiguities", [])
+            needs_clarification = response.get("needs_clarification", False)
+            
+            # Trigger HITL if ambiguities exceed threshold
+            requires_hitl = (
+                len(ambiguities) >= settings.PARSER_AMBIGUITY_THRESHOLD or
+                needs_clarification
+            )
+            
+            if requires_hitl:
+                self.logger.warning(
+                    f"Parser HITL triggered: {len(ambiguities)} ambiguities found"
+                )
+            
             output = ParserOutput(
                 problem_text=response.get("problem_text", input_data.raw_text),
                 topic=response.get("topic", "general"),
                 variables=response.get("variables", []),
                 constraints=response.get("constraints", []),
-                needs_clarification=response.get("needs_clarification", False),
-                ambiguities=response.get("ambiguities", []),
+                needs_clarification=needs_clarification,
+                ambiguities=ambiguities,
+                requires_human_review=requires_hitl,
                 metadata={"raw_input_length": len(input_data.raw_text)}
             )
             
-            self.logger.info(f"Parsed problem - Topic: {output.topic}, Variables: {len(output.variables)}")
+            self.logger.info(f"Parsed problem - Topic: {output.topic}, Variables: {len(output.variables)}, HITL: {requires_hitl}")
             return output
             
         except Exception as e:

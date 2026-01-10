@@ -123,7 +123,7 @@ For each step of the solution:
         if not verification.is_correct or verification.correctness_issues:
             verification_note = f"""
 ⚠️ IMPORTANT: The solution has some issues that need to be addressed:
-{chr(10).join(f"- {issue}" for issue in verification.correctness_issues)}
+{chr(10).join(f"- {issue if isinstance(issue, str) else str(issue)}" for issue in verification.correctness_issues)}
 Please incorporate corrections and explain why the original approach had issues.
 """
         
@@ -139,7 +139,7 @@ Imagine you are tutoring a student one-on-one who needs to deeply understand thi
 **Final Answer:** {solution.answer}
 
 **Solution Steps:**
-{chr(10).join(f"{i+1}. {step}" for i, step in enumerate(solution.solution_steps))}
+{chr(10).join(f"{i+1}. {step if isinstance(step, str) else str(step)}" for i, step in enumerate(solution.solution_steps))}
 
 **Reasoning Used:** {solution.reasoning}
 

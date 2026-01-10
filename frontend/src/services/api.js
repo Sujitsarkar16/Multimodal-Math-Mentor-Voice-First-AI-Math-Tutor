@@ -1,103 +1,109 @@
 /**
- * API Service - Connects frontend to Math Mentor backend
+ * API Service - Centralized API client for Math Mentor backend
+ * Provides type-safe methods with proper error handling and callbacks
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
+// Request state management using WeakMap for memory efficiency
+const activeRequests = new Map();
+let currentAbortController = null;
+
 /**
- * Helper to make API requests with error handling
+ * Generic API request handler with retry and timeout support
+ * @param {string} endpoint - API endpoint
+ * @param {Object} options - Fetch options
+ * @param {Object} config - Additional config (retries, timeout)
+ * @returns {Promise<any>}
  */
-async function apiRequest(endpoint, options = {}) {
+async function apiRequest(endpoint, options = {}, config = {}) {
+    const { retries = 0, timeout = 30000 } = config;
     const url = `${API_BASE}${endpoint}`;
+    const isFormData = options.body instanceof FormData;
+
+    const fetchOptions = {
+        ...options,
+        headers: isFormData
+            ? options.headers
+            : { 'Content-Type': 'application/json', ...options.headers },
+    };
+
+    // Add timeout using AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    fetchOptions.signal = options.signal || controller.signal;
 
     try {
-        // Don't set Content-Type for FormData - browser will set it with boundary
-        const isFormData = options.body instanceof FormData;
-        const headers = isFormData
-            ? { ...options.headers }
-            : {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            };
-
-        const response = await fetch(url, {
-            ...options,
-            headers,
-        });
+        const response = await fetch(url, fetchOptions);
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-            throw new Error(error.detail || `HTTP ${response.status}`);
+            const error = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
+            throw new Error(error.detail || error.error || `HTTP ${response.status}`);
         }
 
-        return await response.json();
+        return response.json();
     } catch (error) {
-        console.error(`API Error [${endpoint}]:`, error);
+        clearTimeout(timeoutId);
+
+        // Retry on network errors
+        if (retries > 0 && error.name !== 'AbortError') {
+            await new Promise(r => setTimeout(r, 1000));
+            return apiRequest(endpoint, options, { ...config, retries: retries - 1 });
+        }
+
+        console.error(`API Error [${endpoint}]:`, error.message);
         throw error;
     }
 }
 
+// ============================================================================
+// Ingest API
+// ============================================================================
+
 /**
- * Ingest text, image, or audio input
+ * Ingest input (text, image, or audio)
+ * @param {'text'|'image'|'audio'} inputType
+ * @param {string|null} textValue
+ * @param {File|null} file
  */
 export async function ingestInput(inputType, textValue = null, file = null) {
     const formData = new FormData();
     formData.append('input_type', inputType);
 
-    if (inputType === 'text') {
+    if (inputType === 'text' && textValue) {
         formData.append('text', textValue);
     } else if (file) {
         formData.append('file', file);
     }
 
-    const url = `${API_BASE}/ingest`;
-    const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-    });
-
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Ingest failed' }));
-        throw new Error(error.error || error.detail || 'Ingest failed');
-    }
-
-    return await response.json();
+    return apiRequest('/ingest', { method: 'POST', body: formData });
 }
 
-/**
- * Ingest image for OCR
- */
-export async function ingestImage(file) {
-    return ingestInput('image', null, file);
-}
+export const ingestImage = (file) => ingestInput('image', null, file);
+export const ingestAudio = (file) => ingestInput('audio', null, file);
+
+// ============================================================================
+// Solve API
+// ============================================================================
 
 /**
- * Ingest audio for ASR transcription
- */
-export async function ingestAudio(file) {
-    return ingestInput('audio', null, file);
-}
-
-/**
- * Solve a problem using the multi-agent system (faster with parallel execution)
+ * Solve problem (async endpoint)
  */
 export async function solveProblem(text, options = {}) {
     return apiRequest('/solve/async', {
         method: 'POST',
         body: JSON.stringify({
             text,
-            context: options.context || null,
+            context: options.context ?? null,
             enable_guardrails: options.enableGuardrails !== false,
         }),
     });
 }
 
-// Global abort controller for current streaming request
-let currentAbortController = null;
-
 /**
- * Abort the current streaming request if one is in progress
- * @returns {boolean} - True if a request was aborted
+ * Abort current streaming request
+ * @returns {boolean}
  */
 export function abortCurrentRequest() {
     if (currentAbortController) {
@@ -109,39 +115,29 @@ export function abortCurrentRequest() {
 }
 
 /**
- * Check if a streaming request is currently in progress
- * @returns {boolean}
+ * Check if streaming is in progress
  */
-export function isStreamingInProgress() {
-    return currentAbortController !== null;
-}
+export const isStreamingInProgress = () => currentAbortController !== null;
 
 /**
- * Solve a problem with streaming updates from agents
+ * Solve with streaming updates (SSE)
  * @param {string} text - Problem text
- * @param {object} options - Options
- * @param {function} onProgress - Callback for agent progress updates
- * @param {AbortSignal} signal - Optional external abort signal
- * @returns {Promise} - Resolves with final result
+ * @param {Object} options - Solve options
+ * @param {Function} onProgress - Progress callback
+ * @param {AbortSignal} signal - External abort signal
  */
 export async function solveProblemStreaming(text, options = {}, onProgress = null, signal = null) {
-    const url = `${API_BASE}/solve/stream`;
-
-    // Create abort controller for this request
     currentAbortController = new AbortController();
     const abortSignal = signal || currentAbortController.signal;
-
     let reader = null;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(`${API_BASE}/solve/stream`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 text,
-                context: options.context || null,
+                context: options.context ?? null,
                 enable_guardrails: options.enableGuardrails !== false,
             }),
             signal: abortSignal,
@@ -158,137 +154,141 @@ export async function solveProblemStreaming(text, options = {}, onProgress = nul
         let finalResult = null;
 
         while (true) {
-            // Check if aborted
             if (abortSignal.aborted) {
                 throw new DOMException('Request aborted', 'AbortError');
             }
 
             const { done, value } = await reader.read();
-
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
 
-            // Process complete SSE messages
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || ''; // Keep incomplete message in buffer
+            // Parse SSE messages - O(n) where n = buffer length
+            const messages = buffer.split('\n\n');
+            buffer = messages.pop() || '';
 
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    try {
-                        const data = JSON.parse(line.slice(6));
+            for (const msg of messages) {
+                if (!msg.startsWith('data: ')) continue;
 
-                        if (data.type === 'final_result') {
+                try {
+                    const data = JSON.parse(msg.slice(6));
+
+                    switch (data.type) {
+                        case 'final_result':
                             finalResult = data.data;
-                        } else if (data.type === 'agent_update' && onProgress) {
-                            // Use setTimeout to avoid blocking the main thread
-                            setTimeout(() => onProgress(data), 0);
-                        } else if (data.type === 'error') {
+                            break;
+                        case 'agent_update':
+                            onProgress?.(data);
+                            break;
+                        case 'error':
                             throw new Error(data.error);
-                        }
-                    } catch (e) {
-                        if (e.name === 'AbortError') throw e;
-                        console.error('Error parsing SSE data:', e);
                     }
+                } catch (e) {
+                    if (e.name === 'AbortError') throw e;
+                    console.warn('SSE parse error:', e.message);
                 }
             }
         }
 
-        if (!finalResult) {
-            throw new Error('No final result received from stream');
-        }
-
+        if (!finalResult) throw new Error('No final result from stream');
         return finalResult;
-    } catch (error) {
-        // Re-throw abort errors as-is
-        if (error.name === 'AbortError') {
-            console.log('Streaming request was aborted');
-            throw error;
-        }
-        throw error;
+
     } finally {
-        // Clean up reader if it exists
-        if (reader) {
-            try {
-                await reader.cancel();
-            } catch (e) {
-                // Ignore cancel errors
-            }
-        }
-        // Clear the global abort controller
+        reader?.cancel().catch(() => { });
         currentAbortController = null;
     }
 }
 
+// ============================================================================
+// Feedback API
+// ============================================================================
+
 /**
- * Submit feedback for a solution
+ * Submit solution feedback
  */
 export async function submitFeedback(entryId, isCorrect, comment = null) {
-    if (!entryId) {
-        throw new Error('entry_id is required. The solution was not stored in memory.');
-    }
+    if (!entryId) throw new Error('entry_id is required');
 
-    const endpoint = isCorrect ? '/feedback/correct' : '/feedback/incorrect';
-    return apiRequest(endpoint, {
+    return apiRequest(isCorrect ? '/feedback/correct' : '/feedback/incorrect', {
         method: 'POST',
-        body: JSON.stringify({
-            entry_id: entryId,
-            is_correct: isCorrect,
-            comment: comment || null,
-        }),
+        body: JSON.stringify({ entry_id: entryId, is_correct: isCorrect, comment }),
     });
 }
 
 /**
- * HITL - Approve parsed/solved result
+ * HITL approval
  */
 export async function hitlApprove(entryId, editedText = null) {
     return apiRequest('/feedback/hitl/approve', {
         method: 'POST',
-        body: JSON.stringify({
-            entry_id: entryId,
-            edited_text: editedText,
-        }),
+        body: JSON.stringify({ entry_id: entryId, edited_text: editedText }),
     });
 }
 
 /**
- * HITL - Reject parsed/solved result
+ * HITL rejection
  */
 export async function hitlReject(entryId, reason) {
     return apiRequest('/feedback/hitl/reject', {
         method: 'POST',
-        body: JSON.stringify({
-            entry_id: entryId,
-            reason,
-        }),
+        body: JSON.stringify({ entry_id: entryId, reason }),
+    });
+}
+
+// ============================================================================
+// History & Stats API  
+// ============================================================================
+
+export const getHistory = (limit = 20) => apiRequest(`/feedback/history?limit=${limit}`);
+export const getEntry = (entryId) => apiRequest(`/feedback/entry/${entryId}`);
+export const getPipelineStats = () => apiRequest('/solve/stats');
+export const healthCheck = () => apiRequest('/solve/health');
+
+// ============================================================================
+// Knowledge Base API
+// ============================================================================
+
+/**
+ * Get knowledge base entries with optional filters
+ * @param {Object} filters - { topic, type, difficulty, search }
+ */
+export async function getKnowledgeBase(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.topic) params.set('topic', filters.topic);
+    if (filters.type) params.set('type', filters.type);
+    if (filters.difficulty) params.set('difficulty', filters.difficulty);
+    if (filters.search) params.set('search', filters.search);
+    params.set('include_stats', 'true');
+
+    return apiRequest(`/knowledge?${params}`);
+}
+
+export const getKnowledgeTopics = () => apiRequest('/knowledge/topics');
+export const getKnowledgeEntry = (id) => apiRequest(`/knowledge/${id}`);
+
+/**
+ * Create new knowledge entry
+ */
+export async function createKnowledgeEntry(entry) {
+    return apiRequest('/knowledge', {
+        method: 'POST',
+        body: JSON.stringify(entry),
     });
 }
 
 /**
- * Get problem-solving history
+ * Update knowledge entry
  */
-export async function getHistory(limit = 20) {
-    return apiRequest(`/feedback/history?limit=${limit}`);
+export async function updateKnowledgeEntry(id, updates) {
+    return apiRequest(`/knowledge/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+    });
 }
 
 /**
- * Get details of a specific entry
+ * Delete knowledge entry
  */
-export async function getEntry(entryId) {
-    return apiRequest(`/feedback/entry/${entryId}`);
-}
-
-/**
- * Get pipeline statistics
- */
-export async function getPipelineStats() {
-    return apiRequest('/solve/stats');
-}
-
-/**
- * Health check
- */
-export async function healthCheck() {
-    return apiRequest('/solve/health');
+export async function deleteKnowledgeEntry(id) {
+    return apiRequest(`/knowledge/${id}`, { method: 'DELETE' });
 }

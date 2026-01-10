@@ -101,7 +101,7 @@ Check each calculation:
             confidence = response.get("confidence", 0.5)
             has_issues = len(response.get("correctness_issues", [])) > 0
             requires_human = (
-                confidence < settings.CONFIDENCE_THRESHOLD or
+                confidence < settings.VERIFIER_CONFIDENCE_THRESHOLD or
                 has_issues or
                 response.get("requires_human_review", False)
             )
@@ -146,7 +146,7 @@ CONSTRAINTS: {', '.join(problem.constraints) if problem.constraints else 'None'}
 PROPOSED SOLUTION:
 Answer: {solution.answer}
 Reasoning: {solution.reasoning}
-Steps: {chr(10).join(f"{i+1}. {step}" for i, step in enumerate(solution.solution_steps))}
+Steps: {chr(10).join(f"{i+1}. {step if isinstance(step, str) else str(step)}" for i, step in enumerate(solution.solution_steps))}
 
 VERIFICATION CHECKLIST:
 1. Is the mathematical reasoning sound?

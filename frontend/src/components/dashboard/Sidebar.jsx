@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 const Sidebar = ({ activeTab, setActiveTab }) => {
     const navItems = [
         { id: 'workspace', label: 'Workspace', icon: 'lucide:layout-dashboard' },
-        { id: 'knowledge', label: 'Knowledge Base', icon: 'lucide:layers' },
+        { id: 'knowledge', label: 'Knowledge Base', icon: 'lucide:library' },
         { id: 'history', label: 'History', icon: 'lucide:history' },
     ];
 

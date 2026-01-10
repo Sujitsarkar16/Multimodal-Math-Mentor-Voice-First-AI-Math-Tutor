@@ -11,6 +11,7 @@ from app.agents.solver import SolverAgent
 from app.agents.verifier import VerifierAgent
 from app.agents.explainer import ExplainerAgent
 from app.agents.guardrail import GuardrailAgent
+from app.agents.input_verifier import InputVerifierAgent
 
 __all__ = [
     # Base classes
@@ -19,6 +20,7 @@ __all__ = [
     "AgentOutput",
     
     # Agent implementations
+    "InputVerifierAgent",  # NEW: Validates OCR/ASR before parsing
     "ParserAgent",
     "IntentRouterAgent",
     "SolverAgent",
@@ -26,3 +28,4 @@ __all__ = [
     "ExplainerAgent",
     "GuardrailAgent",
 ]
+

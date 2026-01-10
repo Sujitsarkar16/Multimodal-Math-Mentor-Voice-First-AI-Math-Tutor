@@ -29,9 +29,15 @@ class Settings(BaseSettings):
     
     # Agent Configuration
     ENABLE_GUARDRAILS: bool = True
-    CONFIDENCE_THRESHOLD: float = 0.7
     MAX_RETRIES: int = 3
     USE_LANGCHAIN_REACT: bool = True  # Use LangChain ReAct agent for enhanced solving
+    
+    # HITL (Human-in-the-Loop) Confidence Thresholds
+    # Standardized at 75% across all components
+    OCR_CONFIDENCE_THRESHOLD: float = 0.75  # Trigger HITL if OCR confidence < 75%
+    ASR_CONFIDENCE_THRESHOLD: float = 0.75  # Trigger HITL if ASR confidence < 75%
+    VERIFIER_CONFIDENCE_THRESHOLD: float = 0.75  # Trigger HITL if Verifier confidence < 75%
+    PARSER_AMBIGUITY_THRESHOLD: int = 1  # Trigger HITL if parser finds >= 1 ambiguity
     
     # RAG Configuration
     EMBEDDING_MODEL: str = "models/embedding-001"

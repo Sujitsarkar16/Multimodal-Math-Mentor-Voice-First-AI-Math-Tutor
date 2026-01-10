@@ -261,7 +261,9 @@ Available tools:
                     prompt += f"### Pattern {i}:\n"
                     prompt += f"**Problem Type:** {pattern.get('problem', 'N/A')}\n"
                     if pattern.get('solution_steps'):
-                        prompt += f"**Solution Approach:** {' → '.join(pattern.get('solution_steps', []))}\n"
+                        steps = pattern.get('solution_steps', [])
+                        steps_str = ' → '.join(s if isinstance(s, str) else str(s) for s in steps)
+                        prompt += f"**Solution Approach:** {steps_str}\n"
                     prompt += f"**Answer Format:** {pattern.get('answer', 'N/A')}\n\n"
         
         prompt += """

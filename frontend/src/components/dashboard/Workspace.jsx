@@ -725,6 +725,48 @@ const Workspace = ({ onSolveComplete }) => {
                                     <span className="text-xs text-neutral-400">Confidence: <span className="font-medium text-white">{solutionData.confidence}%</span></span>
                                 </div>
 
+                                {/* HITL Reasons Banner */}
+                                {solutionData.requiresReview && solutionData.metadata?.hitl_reasons && solutionData.metadata.hitl_reasons.length > 0 && (
+                                    <div className="px-5 py-3 bg-amber-500/5 border-b border-amber-500/10">
+                                        <div className="flex items-start gap-2">
+                                            <Icon icon="lucide:info" className="text-amber-400 mt-0.5" width={14} />
+                                            <div className="flex-1">
+                                                <p className="text-xs font-medium text-amber-200 mb-1">Why Review is Recommended:</p>
+                                                <ul className="text-xs text-amber-300/80 space-y-1">
+                                                    {solutionData.metadata.hitl_reasons.map((reason, idx) => (
+                                                        <li key={idx} className="flex items-center gap-1.5">
+                                                            <span className="w-1 h-1 rounded-full bg-amber-400"></span>
+                                                            {reason === 'parser_ambiguity' && 'Problem statement contains ambiguities'}
+                                                            {reason === 'verifier_low_confidence' && `Verifier confidence below threshold (${solutionData.confidence}%)`}
+                                                            {reason === 'ocr_low_confidence' && 'OCR extraction confidence was low'}
+                                                            {reason === 'asr_low_confidence' && 'Audio transcription confidence was low'}
+                                                            {!['parser_ambiguity', 'verifier_low_confidence', 'ocr_low_confidence', 'asr_low_confidence'].includes(reason) && reason}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                {/* Show parser ambiguities if any */}
+                                                {solutionData.metadata.parser_ambiguities && solutionData.metadata.parser_ambiguities.length > 0 && (
+                                                    <div className="mt-2 p-2 bg-amber-900/20 rounded border border-amber-500/20">
+                                                        <p className="text-[10px] text-amber-300/60 uppercase tracking-wider mb-1">Ambiguities Detected:</p>
+                                                        {solutionData.metadata.parser_ambiguities.map((amb, idx) => (
+                                                            <p key={idx} className="text-xs text-amber-200/80">• {amb}</p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {/* Show verifier issues if any */}
+                                                {solutionData.metadata.verifier_issues && solutionData.metadata.verifier_issues.length > 0 && (
+                                                    <div className="mt-2 p-2 bg-amber-900/20 rounded border border-amber-500/20">
+                                                        <p className="text-[10px] text-amber-300/60 uppercase tracking-wider mb-1">Verifier Concerns:</p>
+                                                        {solutionData.metadata.verifier_issues.map((issue, idx) => (
+                                                            <p key={idx} className="text-xs text-amber-200/80">• {issue}</p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex-1 p-6 overflow-y-auto space-y-6">
                                     {/* Final Answer Section */}
                                     <div className="space-y-2">

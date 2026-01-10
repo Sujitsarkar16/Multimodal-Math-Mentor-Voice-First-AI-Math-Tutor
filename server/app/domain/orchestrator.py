@@ -107,11 +107,22 @@ class AgentOrchestrator:
             )
             
             # Build final output
+            # Combine HITL triggers from all agents:
+            # 1. Parser ambiguity detected
+            # 2. Verifier low confidence
+            hitl_reasons = []
+            if parsed.requires_human_review:
+                hitl_reasons.append("parser_ambiguity")
+            if verification.requires_human_review:
+                hitl_reasons.append("verifier_low_confidence")
+            
+            requires_hitl = len(hitl_reasons) > 0
+            
             output = PipelineOutput(
                 final_answer=solution.answer,
                 explanation=explanation.explanation,
                 confidence=verification.confidence,
-                requires_human_review=verification.requires_human_review,
+                requires_human_review=requires_hitl,
                 agent_trace=self.trace,
                 retrieved_context=None,  # Could expose from solver if needed
                 metadata={
@@ -123,13 +134,16 @@ class AgentOrchestrator:
                     "difficulty_rating": explanation.difficulty_rating,
                     "step_by_step": explanation.step_by_step,
                     "key_concepts": explanation.key_concepts,
-                    "common_mistakes": explanation.common_mistakes
+                    "common_mistakes": explanation.common_mistakes,
+                    "hitl_reasons": hitl_reasons,  # Track why HITL was triggered
+                    "parser_ambiguities": parsed.ambiguities,
+                    "verifier_issues": verification.correctness_issues
                 }
             )
             
             logger.info(
                 f"Pipeline completed - Confidence: {output.confidence:.2f}, "
-                f"HITL: {output.requires_human_review}"
+                f"HITL: {output.requires_human_review} (reasons: {hitl_reasons})"
             )
             
             return output

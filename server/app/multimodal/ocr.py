@@ -101,7 +101,7 @@ class OCRService:
                 "confidence": confidence,
                 "warnings": parsed.get("warnings", []),
                 "layout": parsed.get("layout", "mixed"),
-                "needs_confirmation": parsed.get("needs_confirmation", confidence < 0.85)
+                "needs_confirmation": parsed.get("needs_confirmation", confidence < settings.OCR_CONFIDENCE_THRESHOLD)
             }
             
             return result

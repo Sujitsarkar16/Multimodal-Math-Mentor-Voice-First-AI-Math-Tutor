@@ -9,6 +9,30 @@ from app.agents.base import AgentInput, AgentOutput
 
 
 # ============================================================================
+# Input Verifier Agent Models (NEW - runs before Parser)
+# ============================================================================
+
+class InputVerifierInput(AgentInput):
+    """Input for the Input Verifier Agent."""
+    extracted_text: str = Field(..., description="Text extracted from OCR/ASR")
+    extraction_confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence from OCR/ASR")
+    input_type: str = Field(..., description="Source type: 'ocr', 'asr', or 'text'")
+    warnings: List[str] = Field(default_factory=list, description="Warnings from extraction")
+    needs_confirmation: bool = Field(default=False, description="Flag from extractor")
+
+
+class InputVerifierOutput(AgentOutput):
+    """Output from the Input Verifier Agent."""
+    is_valid: bool = Field(..., description="Whether extraction quality is acceptable")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Verified confidence")
+    requires_human_review: bool = Field(default=False, description="Needs HITL before proceeding")
+    hitl_reason: Optional[str] = Field(None, description="Reason for HITL trigger")
+    verified_text: str = Field(..., description="Text to proceed with (may be same as input)")
+    quality_issues: List[str] = Field(default_factory=list, description="Identified quality issues")
+    can_proceed: bool = Field(default=True, description="Whether pipeline can proceed")
+
+
+# ============================================================================
 # Parser Agent Models
 # ============================================================================
 
@@ -26,6 +50,7 @@ class ParserOutput(AgentOutput):
     constraints: List[str] = Field(default_factory=list, description="Identified constraints")
     needs_clarification: bool = Field(default=False, description="Whether clarification is needed")
     ambiguities: List[str] = Field(default_factory=list, description="Identified ambiguities")
+    requires_human_review: bool = Field(default=False, description="HITL trigger from parser ambiguity")
 
 
 # ============================================================================
