@@ -52,6 +52,17 @@ def solve_problem(
             "confidence": result.confidence,
             "requires_human_review": result.requires_human_review,
             "retrieved_context": result.retrieved_context or [],
+            "retrieval_used": result.retrieval_used,
+            "retrieval_failed": result.retrieval_failed,
+            "sources": [
+                {
+                    "content": source.content,
+                    "source_type": source.source_type,
+                    "similarity_score": source.similarity_score,
+                    "metadata": source.metadata
+                }
+                for source in result.sources
+            ],
             "agent_trace": [
                 {
                     "agent": trace.agent_name,
@@ -119,6 +130,17 @@ async def solve_problem_async(
             "confidence": result.confidence,
             "requires_human_review": result.requires_human_review,
             "retrieved_context": result.retrieved_context or [],
+            "retrieval_used": result.retrieval_used,
+            "retrieval_failed": result.retrieval_failed,
+            "sources": [
+                {
+                    "content": source.content,
+                    "source_type": source.source_type,
+                    "similarity_score": source.similarity_score,
+                    "metadata": source.metadata
+                }
+                for source in result.sources
+            ],
             "agent_trace": [
                 {
                     "agent": trace.agent_name,

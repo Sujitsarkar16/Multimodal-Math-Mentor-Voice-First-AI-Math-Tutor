@@ -89,6 +89,9 @@ class SolverOutput(AgentOutput):
     used_context: bool = Field(default=False, description="Whether RAG context was used")
     tools_used: List[str] = Field(default_factory=list, description="Tools used in solving")
     reasoning: str = Field(..., description="Reasoning process")
+    retrieved_context: Optional[List[str]] = Field(default=None, description="Context retrieved from RAG/memory")
+    retrieval_attempted: bool = Field(default=False, description="Whether retrieval was attempted")
+    retrieval_failed: bool = Field(default=False, description="Whether retrieval failed")
 
 
 # ============================================================================
@@ -172,6 +175,14 @@ class AgentTrace(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Agent-specific metadata (e.g., self-learning status)")
 
 
+class RetrievalSource(BaseModel):
+    """Source of retrieved context."""
+    content: str = Field(..., description="The retrieved content")
+    source_type: Literal["rag", "memory"] = Field(..., description="Type of source")
+    similarity_score: Optional[float] = Field(default=None, description="Similarity score if available")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional source metadata")
+
+
 class PipelineOutput(BaseModel):
     """Output from the complete pipeline."""
     final_answer: str
@@ -180,4 +191,7 @@ class PipelineOutput(BaseModel):
     requires_human_review: bool
     agent_trace: List[AgentTrace]
     retrieved_context: Optional[List[str]] = None
+    retrieval_used: bool = Field(default=False, description="Whether retrieval was used to enhance the solution")
+    retrieval_failed: bool = Field(default=False, description="Whether retrieval was attempted but failed")
+    sources: List[RetrievalSource] = Field(default_factory=list, description="List of sources used")
     metadata: Dict[str, Any] = {}

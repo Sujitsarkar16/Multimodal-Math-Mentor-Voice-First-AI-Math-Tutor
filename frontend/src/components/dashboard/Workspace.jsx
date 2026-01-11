@@ -380,6 +380,10 @@ const Workspace = ({ onSolveComplete }) => {
                 confidence: confidencePercent,
                 explanation: result.explanation,
                 requiresReview: needsHITL,
+                retrievalUsed: result.retrieval_used || false,
+                retrievalFailed: result.retrieval_failed || false,
+                sources: result.sources || [],
+                retrievedContext: result.retrieved_context || [],
                 metadata: result.metadata
             });
             setViewState('solution');
@@ -890,6 +894,81 @@ const Workspace = ({ onSolveComplete }) => {
                                                         </div>
                                                     </div>
                                                 ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Sources / Retrieved Context (only show if retrieval was used and not failed) */}
+                                    {solutionData.retrievalUsed && !solutionData.retrievalFailed && solutionData.sources && solutionData.sources.length > 0 && (
+                                        <div className="space-y-2">
+                                            <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider flex items-center gap-2">
+                                                <Icon icon="lucide:database" className="text-cyan-400" width={14} />
+                                                Sources Used
+                                                <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/30">
+                                                    {solutionData.sources.length} source{solutionData.sources.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </span>
+                                            <div className="space-y-2">
+                                                {solutionData.sources.map((source, idx) => (
+                                                    <div key={idx} className={`p-3 rounded-lg border ${source.source_type === 'memory'
+                                                        ? 'bg-indigo-500/5 border-indigo-500/20'
+                                                        : 'bg-cyan-500/5 border-cyan-500/20'
+                                                        }`}>
+                                                        <div className="flex items-start gap-2 mb-2">
+                                                            <Icon
+                                                                icon={source.source_type === 'memory' ? 'lucide:brain' : 'lucide:book-open'}
+                                                                className={source.source_type === 'memory' ? 'text-indigo-400' : 'text-cyan-400'}
+                                                                width={14}
+                                                            />
+                                                            <span className={`text-[10px] uppercase tracking-wider font-medium ${source.source_type === 'memory' ? 'text-indigo-400' : 'text-cyan-400'
+                                                                }`}>
+                                                                {source.source_type === 'memory' ? 'Learned Pattern' : 'Knowledge Base'}
+                                                            </span>
+                                                            {source.similarity_score && (
+                                                                <span className="text-[9px] text-neutral-500 ml-auto">
+                                                                    {Math.round(source.similarity_score * 100)}% match
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="prose prose-invert prose-sm max-w-none text-neutral-300/90 text-xs line-clamp-3">
+                                                            <MarkdownErrorBoundary fallbackText={source.content}>
+                                                                <ReactMarkdown
+                                                                    remarkPlugins={[remarkMath]}
+                                                                    rehypePlugins={[rehypeKatex]}
+                                                                >
+                                                                    {processLatexContent(String(source.content).slice(0, 300) + (source.content.length > 300 ? '...' : ''))}
+                                                                </ReactMarkdown>
+                                                            </MarkdownErrorBoundary>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Retrieval Failed Warning */}
+                                    {solutionData.retrievalFailed && (
+                                        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                                            <div className="flex items-start gap-3">
+                                                <Icon icon="lucide:database-off" className="text-amber-400 mt-0.5" width={18} />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-amber-200 mb-1">Knowledge Retrieval Unavailable</p>
+                                                    <p className="text-xs text-amber-300/80">
+                                                        The system was unable to retrieve relevant context from the knowledge base.
+                                                        The solution was generated without citations from the curated knowledge base or learned patterns.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* No Sources Available Notice (when retrieval was attempted and succeeded but found nothing) */}
+                                    {solutionData.retrievalUsed && !solutionData.retrievalFailed && (!solutionData.sources || solutionData.sources.length === 0) && (
+                                        <div className="p-3 bg-neutral-800/50 border border-neutral-700/50 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <Icon icon="lucide:search-x" className="text-neutral-500" width={14} />
+                                                <p className="text-xs text-neutral-400">
+                                                    No relevant sources found in the knowledge base for this problem.
+                                                </p>
                                             </div>
                                         </div>
                                     )}

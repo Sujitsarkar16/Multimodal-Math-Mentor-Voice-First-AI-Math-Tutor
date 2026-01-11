@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, List, Callable
 from app.agents.models import (
     ParserInput, IntentRouterInput, SolverInput,
     VerifierInput, ExplainerInput, GuardrailInput,
-    PipelineInput, PipelineOutput, AgentTrace
+    PipelineInput, PipelineOutput, AgentTrace, RetrievalSource
 )
 from app.agents.parser import ParserAgent
 from app.agents.router import IntentRouterAgent
@@ -151,13 +151,27 @@ class AsyncAgentOrchestrator:
             
             requires_hitl = len(hitl_reasons) > 0
             
+            # Build sources list from retrieved context
+            sources = []
+            if solution.retrieved_context:
+                for ctx in solution.retrieved_context:
+                    source_type = "memory" if str(ctx).startswith("[Memory Pattern]") else "rag"
+                    sources.append(RetrievalSource(
+                        content=str(ctx),
+                        source_type=source_type,
+                        metadata={}
+                    ))
+            
             output = PipelineOutput(
                 final_answer=solution.answer,
                 explanation=explanation.explanation,
                 confidence=verification.confidence,
                 requires_human_review=requires_hitl,
                 agent_trace=self.trace,
-                retrieved_context=None,
+                retrieved_context=solution.retrieved_context,
+                retrieval_used=solution.used_context,
+                retrieval_failed=solution.retrieval_failed,
+                sources=sources,
                 metadata={
                     "problem_type": routing.problem_type,
                     "difficulty": routing.difficulty_level,
@@ -171,7 +185,8 @@ class AsyncAgentOrchestrator:
                     "execution_mode": "async_parallel",
                     "hitl_reasons": hitl_reasons,  # Track why HITL was triggered
                     "parser_ambiguities": parsed.ambiguities,
-                    "verifier_issues": verification.correctness_issues
+                    "verifier_issues": verification.correctness_issues,
+                    "retrieval_attempted": solution.retrieval_attempted
                 }
             )
             

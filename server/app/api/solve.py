@@ -25,6 +25,14 @@ class SolveRequest(BaseModel):
     enable_guardrails: bool = Field(True, description="Enable safety checks")
 
 
+class SourceModel(BaseModel):
+    """Model for a retrieval source."""
+    content: str
+    source_type: str  # 'rag' or 'memory'
+    similarity_score: Optional[float] = None
+    metadata: Dict[str, Any] = {}
+
+
 class SolveResponse(BaseModel):
     """Response model for problem solving."""
     memory_id: Optional[str] = None
@@ -33,6 +41,9 @@ class SolveResponse(BaseModel):
     confidence: float
     requires_human_review: bool
     retrieved_context: List[str] = []
+    retrieval_used: bool = False
+    retrieval_failed: bool = False
+    sources: List[SourceModel] = []
     agent_trace: list
     metadata: Dict[str, Any]
 

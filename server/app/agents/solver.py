@@ -88,7 +88,16 @@ Available tools:
         """
         try:
             # Retrieve relevant context from both RAG and memory (self-learning)
-            rag_contexts, memory_patterns = self._retrieve_context(input_data)
+            rag_contexts, memory_patterns, retrieval_attempted, retrieval_failed = self._retrieve_context(input_data)
+            
+            # Combine contexts for output
+            all_contexts = []
+            if rag_contexts:
+                all_contexts.extend(rag_contexts)
+            if memory_patterns:
+                for pattern in memory_patterns:
+                    if pattern.get('problem'):
+                        all_contexts.append(f"[Memory Pattern] {pattern.get('problem')}: {pattern.get('solution', '')}")
             
             # Build solving prompt with both sources of knowledge
             prompt = self._build_prompt(input_data, rag_contexts, memory_patterns)
@@ -125,6 +134,9 @@ Available tools:
                 used_context=bool(rag_contexts or memory_patterns),
                 tools_used=[t["tool"] for t in tools_used],
                 reasoning=response.get("reasoning", ""),
+                retrieved_context=all_contexts if all_contexts else None,
+                retrieval_attempted=retrieval_attempted,
+                retrieval_failed=retrieval_failed,
                 metadata={
                     "problem_type": input_data.routing_info.problem_type,
                     "rag_context_count": len(rag_contexts) if rag_contexts else 0,
@@ -136,7 +148,8 @@ Available tools:
             self.logger.info(
                 f"Solved problem - Answer: {output.answer[:50]}..., "
                 f"Steps: {len(output.solution_steps)}, "
-                f"Tools: {output.tools_used}"
+                f"Tools: {output.tools_used}, "
+                f"Retrieval: attempted={retrieval_attempted}, failed={retrieval_failed}, contexts={len(all_contexts)}"
             )
             return output
             
@@ -144,16 +157,20 @@ Available tools:
             self.logger.error(f"Solving failed: {str(e)}")
             raise SolvingError(f"Failed to solve problem: {str(e)}")
     
-    def _retrieve_context(self, input_data: SolverInput) -> Tuple[Optional[List[str]], Optional[List[Dict[str, Any]]]]:
+    def _retrieve_context(self, input_data: SolverInput) -> Tuple[Optional[List[str]], Optional[List[Dict[str, Any]]], bool, bool]:
         """
         Retrieve relevant context using both RAG and memory patterns.
         This enables self-learning from previously solved problems.
         
         Returns:
-            Tuple of (rag_contexts, memory_patterns)
+            Tuple of (rag_contexts, memory_patterns, retrieval_attempted, retrieval_failed)
         """
+        # If context was already provided, don't attempt retrieval
         if input_data.retrieved_context:
-            return input_data.retrieved_context, None
+            return input_data.retrieved_context, None, False, False
+        
+        retrieval_attempted = True
+        retrieval_failed = False
         
         try:
             # Build query from problem
@@ -171,11 +188,12 @@ Available tools:
                 f"{len(memory_patterns)} learned patterns"
             )
             
-            return rag_contexts if rag_contexts else None, memory_patterns if memory_patterns else None
+            return rag_contexts if rag_contexts else None, memory_patterns if memory_patterns else None, retrieval_attempted, retrieval_failed
             
         except Exception as e:
             self.logger.warning(f"Context retrieval failed: {str(e)}")
-            return None, None
+            retrieval_failed = True
+            return None, None, retrieval_attempted, retrieval_failed
     
     def _process_tool_calls(self, response: dict) -> List[dict]:
         """Process any tool calls in the response."""
