@@ -20,6 +20,6 @@
         }
     ],
     "env": {
-        "VITE_API_URL": "https://multimodal-math-mentor-voice-first-ai.onrender.com"
+        "VITE_API_URL": "https://multimodal-math-mentor-voice-first-ai.onrender.com/api/v1"
     }
 }

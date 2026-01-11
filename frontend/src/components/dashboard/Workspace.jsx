@@ -7,10 +7,7 @@ import { Icon } from '@iconify/react';
 import { ingestImage, ingestAudio, solveProblemStreaming, submitFeedback, hitlApprove, abortCurrentRequest } from "../../services/api";
 import { useWorkspace } from "../../context/WorkspaceContext";
 
-/**
- * Process content to ensure LaTeX is properly formatted for rendering.
- * Handles various LaTeX formats: $...$, $$...$$, \frac, etc.
- */
+
 const processLatexContent = (content) => {
     if (!content || typeof content !== 'string') return content || '';
 
