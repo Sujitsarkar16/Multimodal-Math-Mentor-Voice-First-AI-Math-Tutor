@@ -1,9 +1,19 @@
-/**
- * API Service - Centralized API client for Math Mentor backend
- * Provides type-safe methods with proper error handling and callbacks
- */
+// API Base URL Configuration
+// In production, VITE_API_URL should be set in Vercel environment variables to your backend URL
+const getApiBase = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+    // If VITE_API_URL is set, use it
+    if (envUrl) {
+        // Ensure it ends with /api/v1
+        return envUrl.endsWith('/api/v1') ? envUrl : `${envUrl}/api/v1`;
+    }
+
+    // Default to localhost for development
+    return 'http://localhost:8000/api/v1';
+};
+
+const API_BASE = getApiBase();
 
 // Request state management using WeakMap for memory efficiency
 const activeRequests = new Map();
