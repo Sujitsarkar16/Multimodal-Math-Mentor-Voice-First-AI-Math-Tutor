@@ -3,6 +3,7 @@ FastAPI Application - Multi-agent Mathematical Problem Solver
 """
 
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,14 +45,25 @@ app = FastAPI(
 
 # CORS configuration
 allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+allow_creds = True
+
 if settings.ENVIRONMENT == "production":
-    # Add production frontend URL from environment or allow all
-    allowed_origins = ["*"]  # Configure with specific Vercel URL in production
+    # Get allowed origins from environment or use default
+    env_origins = os.getenv("ALLOWED_ORIGINS", "")
+    if env_origins:
+        # Use specific origins from environment variable
+        allowed_origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
+        allow_creds = True
+    else:
+        # Default: Allow all origins in production (without credentials for security)
+        # This allows Vercel preview deployments and production
+        allowed_origins = ["*"]
+        allow_creds = False  # Cannot use credentials with wildcard
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )
