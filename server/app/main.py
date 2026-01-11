@@ -45,7 +45,6 @@ app = FastAPI(
 
 # CORS configuration
 allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
-allow_creds = True
 
 if settings.ENVIRONMENT == "production":
     # Get allowed origins from environment or use default
@@ -53,17 +52,16 @@ if settings.ENVIRONMENT == "production":
     if env_origins:
         # Use specific origins from environment variable
         allowed_origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
-        allow_creds = True
     else:
-        # Default: Allow all origins in production (without credentials for security)
-        # This allows Vercel preview deployments and production
-        allowed_origins = ["*"]
-        allow_creds = False  # Cannot use credentials with wildcard
+        # Default production origin - Vercel frontend
+        allowed_origins = ["https://multimodal-math-mentor-voice-first.vercel.app"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=allow_creds,
+    # Allow Vercel preview deployments using regex (works alongside allow_origins)
+    allow_origin_regex=r"https://.*\.vercel\.app" if settings.ENVIRONMENT == "production" else None,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
