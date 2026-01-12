@@ -2,7 +2,7 @@
 # Railway can use Nixpacks for automatic builds instead of Dockerfile
 
 [phases.setup]
-nixPkgs = ["python311", "ffmpeg"]
+nixPkgs = ["python311"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]

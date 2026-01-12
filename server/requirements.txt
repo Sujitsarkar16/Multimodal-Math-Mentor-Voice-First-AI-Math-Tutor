@@ -16,15 +16,12 @@ google-generativeai>=0.8.3
 
 # Vector Store
 faiss-cpu
-# For GPU: faiss-gpu
 
-# Database (if needed)
-# sqlalchemy>=2.0.23
-# psycopg2-binary>=2.9.9
+# HTTP Client (for AssemblyAI)
+httpx>=0.25.2
 
 # Utilities
 python-dotenv>=1.0.0
-httpx>=0.25.2
 
 # Enhanced symbolic math for ReAct agent
 sympy>=1.12
@@ -32,10 +29,6 @@ sympy>=1.12
 # Development
 pytest>=7.4.3
 pytest-asyncio>=0.21.1
-# Development
-pytest>=7.4.3
-pytest-asyncio>=0.21.1
 
 # Image processing
 Pillow>=10.0.0
-openai-whisper>=20231117

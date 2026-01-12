@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # API Keys
     GEMINI_API_KEY: str = ""  # Required for production, set in .env
     OPENAI_API_KEY: Optional[str] = None
+    ASSEMBLYAI_API_KEY: str = ""  # Required for speech-to-text
     
     # LLM Configuration
     DEFAULT_LLM_MODEL: str = "gemini-2.0-flash-exp"

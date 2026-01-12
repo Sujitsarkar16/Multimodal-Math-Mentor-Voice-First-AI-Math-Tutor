@@ -5,9 +5,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies including FFmpeg
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 

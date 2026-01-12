@@ -1,14 +1,15 @@
 # app/multimodal/asr.py
 
-import whisper
+import os
 import re
+import httpx
 from typing import Dict, Any, List, Tuple
 from app.settings import settings
 
 
 class ASRService:
     """
-    Audio Speech Recognition service with advanced spoken math parsing.
+    Audio Speech Recognition service using AssemblyAI API.
     Converts spoken mathematical expressions into proper mathematical notation.
     
     Examples:
@@ -18,55 +19,112 @@ class ASRService:
         "the derivative of sine x" → "d/dx sin(x)"
     """
     
-    def __init__(self, model_size: str = "small"):
-        self.model = whisper.load_model(model_size)
+    ASSEMBLYAI_API_URL = "https://api.assemblyai.com/v2"
+    
+    def __init__(self):
+        self.api_key = settings.ASSEMBLYAI_API_KEY
+        if not self.api_key:
+            raise ValueError("ASSEMBLYAI_API_KEY is required for speech-to-text")
+        
+        self.headers = {
+            "authorization": self.api_key,
+            "content-type": "application/json"
+        }
         
         # Comprehensive spoken math replacements (order matters!)
         self.math_replacements = self._build_replacement_rules()
 
     def transcribe(self, audio_path: str) -> Dict[str, Any]:
+        """
+        Transcribe audio file using AssemblyAI API.
+        
+        Args:
+            audio_path: Path to the audio file
+            
+        Returns:
+            Dictionary with transcription results
+        """
         try:
-            result = self.model.transcribe(audio_path)
-        except FileNotFoundError as e:
-            raise RuntimeError(
-                "FFmpeg is not installed or not found in system PATH. "
-                "Please install FFmpeg to use audio transcription features."
-            ) from e
+            # Step 1: Upload the audio file
+            upload_url = self._upload_file(audio_path)
+            
+            # Step 2: Request transcription
+            transcript_id = self._request_transcription(upload_url)
+            
+            # Step 3: Poll for completion
+            result = self._poll_transcription(transcript_id)
+            
+            raw_text = result.get("text", "").strip()
+            confidence = result.get("confidence", 0.0)
+            warnings = []
+            
+            # Enhanced math normalization
+            normalized_text, normalization_warnings = self._normalize_math_text(raw_text)
+            warnings.extend(normalization_warnings)
+            
+            needs_confirmation = confidence < settings.ASR_CONFIDENCE_THRESHOLD or len(warnings) > 0
+            
+            return {
+                "raw_text": raw_text,
+                "normalized_text": normalized_text,
+                "text": normalized_text,  # Alias for compatibility
+                "confidence": round(confidence, 2),
+                "warnings": warnings,
+                "needs_confirmation": needs_confirmation
+            }
+            
+        except Exception as e:
+            raise RuntimeError(f"AssemblyAI transcription failed: {str(e)}") from e
 
-        raw_text = result.get("text", "").strip()
-        confidence = self._estimate_confidence(result)
-        warnings = []
+    def _upload_file(self, audio_path: str) -> str:
+        """Upload audio file to AssemblyAI and return the upload URL."""
+        with open(audio_path, "rb") as f:
+            audio_data = f.read()
+        
+        response = httpx.post(
+            f"{self.ASSEMBLYAI_API_URL}/upload",
+            headers={"authorization": self.api_key},
+            content=audio_data,
+            timeout=120.0
+        )
+        response.raise_for_status()
+        return response.json()["upload_url"]
 
-        # Enhanced math normalization
-        normalized_text, normalization_warnings = self._normalize_math_text(raw_text)
-        warnings.extend(normalization_warnings)
+    def _request_transcription(self, audio_url: str) -> str:
+        """Request transcription and return the transcript ID."""
+        response = httpx.post(
+            f"{self.ASSEMBLYAI_API_URL}/transcript",
+            headers=self.headers,
+            json={"audio_url": audio_url},
+            timeout=30.0
+        )
+        response.raise_for_status()
+        return response.json()["id"]
 
-        needs_confirmation = confidence < settings.ASR_CONFIDENCE_THRESHOLD or len(warnings) > 0
-
-        return {
-            "raw_text": raw_text,
-            "normalized_text": normalized_text,
-            "text": normalized_text,  # Alias for compatibility
-            "confidence": confidence,
-            "warnings": warnings,
-            "needs_confirmation": needs_confirmation
-        }
-
-    def _estimate_confidence(self, result: Dict[str, Any]) -> float:
-        """
-        Whisper doesn't give a single confidence score.
-        We approximate using avg logprob and no_speech_prob.
-        """
-        segments = result.get("segments", [])
-        if not segments:
-            return 0.0
-
-        avg_logprob = sum(s.get("avg_logprob", -1.0) for s in segments) / len(segments)
-        no_speech_prob = sum(s.get("no_speech_prob", 0.0) for s in segments) / len(segments)
-
-        # heuristic scaling
-        confidence = max(0.0, min(1.0, 1 + avg_logprob - no_speech_prob))
-        return round(confidence, 2)
+    def _poll_transcription(self, transcript_id: str, max_attempts: int = 60) -> Dict[str, Any]:
+        """Poll for transcription completion."""
+        import time
+        
+        for _ in range(max_attempts):
+            response = httpx.get(
+                f"{self.ASSEMBLYAI_API_URL}/transcript/{transcript_id}",
+                headers=self.headers,
+                timeout=30.0
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            status = result.get("status")
+            
+            if status == "completed":
+                return result
+            elif status == "error":
+                raise RuntimeError(f"Transcription failed: {result.get('error', 'Unknown error')}")
+            
+            # Wait before next poll
+            time.sleep(2)
+        
+        raise RuntimeError("Transcription timed out")
 
     def _build_replacement_rules(self) -> List[Tuple[str, str]]:
         """
@@ -265,4 +323,3 @@ class ASRService:
             normalized = normalized[0].upper() + normalized[1:]
         
         return normalized, warnings
-
