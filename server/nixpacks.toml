@@ -1,0 +1,14 @@
+# Nixpacks configuration for Railway deployment
+# Railway can use Nixpacks for automatic builds instead of Dockerfile
+
+[phases.setup]
+nixPkgs = ["python311", "ffmpeg"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+
+[variables]
+PYTHON_VERSION = "3.11"

@@ -1,6 +1,7 @@
 # User exclusions
 *.md
 !DEPLOYMENT*.md
+!RAILWAY*.md
 !README.md
 
 # Environment & Secrets (CRITICAL - never commit these)
