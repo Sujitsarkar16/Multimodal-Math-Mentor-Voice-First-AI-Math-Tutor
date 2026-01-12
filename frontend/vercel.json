@@ -9,6 +9,9 @@
             }
         }
     ],
+    "env": {
+        "VITE_API_URL": "https://melodious-insight-production-1.up.railway.app"
+    },
     "routes": [
         {
             "src": "/assets/(.*)",

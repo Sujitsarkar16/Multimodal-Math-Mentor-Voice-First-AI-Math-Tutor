@@ -59,8 +59,8 @@ if settings.ENVIRONMENT == "production":
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    # Allow Vercel preview deployments using regex (works alongside allow_origins)
-    allow_origin_regex=r"https://.*\.vercel\.app" if settings.ENVIRONMENT == "production" else None,
+    # Allow Vercel and Railway deployments using regex (works alongside allow_origins)
+    allow_origin_regex=r"https://.*\.(vercel\.app|up\.railway\.app)" if settings.ENVIRONMENT == "production" else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
