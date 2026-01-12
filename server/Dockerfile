@@ -25,6 +25,9 @@ COPY . .
 # Create directory for SQLite database (even if ephemeral)
 RUN mkdir -p app/data
 
+# Set default PORT for Railway
+ENV PORT=8000
+
 # Expose the port that the app runs on
 EXPOSE 8000
 
