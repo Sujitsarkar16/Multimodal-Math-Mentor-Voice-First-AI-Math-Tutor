@@ -43,24 +43,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS configuration
-allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+# CORS configuration - include both development and production origins
+allowed_origins = [
+    "http://localhost:5173", 
+    "http://localhost:3000",
+    "https://multimodal-math-mentor-voice-first.vercel.app",  # Production Vercel frontend
+]
 
-if settings.ENVIRONMENT == "production":
-    # Get allowed origins from environment or use default
-    env_origins = os.getenv("ALLOWED_ORIGINS", "")
-    if env_origins:
-        # Use specific origins from environment variable
-        allowed_origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
-    else:
-        # Default production origin - Vercel frontend
-        allowed_origins = ["https://multimodal-math-mentor-voice-first.vercel.app"]
+# Add any additional origins from environment
+env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if env_origins:
+    for origin in env_origins.split(","):
+        origin = origin.strip()
+        if origin and origin not in allowed_origins:
+            allowed_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    # Allow Vercel and Railway deployments using regex (works alongside allow_origins)
-    allow_origin_regex=r"https://.*\.(vercel\.app|up\.railway\.app)" if settings.ENVIRONMENT == "production" else None,
+    # Always allow Vercel and Railway deployments using regex pattern
+    allow_origin_regex=r"https://.*\.(vercel\.app|up\.railway\.app)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
