@@ -1,15 +1,19 @@
 # app/multimodal/asr.py
 
-import whisper
+import httpx
 import re
+import os
+import base64
 from typing import Dict, Any, List, Tuple
 from app.settings import settings
 
 
 class ASRService:
     """
-    Audio Speech Recognition service with advanced spoken math parsing.
+    Audio Speech Recognition service using Hugging Face Inference API.
     Converts spoken mathematical expressions into proper mathematical notation.
+    
+    Uses Whisper small model via HuggingFace API to reduce RAM usage.
     
     Examples:
         "2 plus 2" → "2 + 2"
@@ -18,55 +22,138 @@ class ASRService:
         "the derivative of sine x" → "d/dx sin(x)"
     """
     
+    # Hugging Face Inference API endpoint for Whisper
+    HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-small"
+    
     def __init__(self, model_size: str = "small"):
-        self.model = whisper.load_model(model_size)
-        
-        # Comprehensive spoken math replacements (order matters!)
+        """
+        Initialize ASR service with HuggingFace Inference API.
+        model_size parameter kept for backwards compatibility but not used.
+        """
+        self.hf_token = os.getenv("HUGGINGFACE_API_KEY") or os.getenv("HF_TOKEN")
         self.math_replacements = self._build_replacement_rules()
+        
+        # Fallback models if primary fails
+        self.fallback_models = [
+            "openai/whisper-small",
+            "openai/whisper-base",
+            "facebook/wav2vec2-base-960h"
+        ]
+
+    async def transcribe_async(self, audio_path: str) -> Dict[str, Any]:
+        """Async version of transcribe using HuggingFace API."""
+        try:
+            # Read audio file
+            with open(audio_path, "rb") as f:
+                audio_data = f.read()
+            
+            headers = {}
+            if self.hf_token:
+                headers["Authorization"] = f"Bearer {self.hf_token}"
+            
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    self.HF_API_URL,
+                    headers=headers,
+                    content=audio_data,
+                )
+                
+                if response.status_code == 503:
+                    # Model is loading, wait and retry
+                    import asyncio
+                    await asyncio.sleep(20)
+                    response = await client.post(
+                        self.HF_API_URL,
+                        headers=headers,
+                        content=audio_data,
+                    )
+                
+                response.raise_for_status()
+                result = response.json()
+            
+            raw_text = result.get("text", "").strip()
+            confidence = 0.85  # HF API doesn't return confidence, use default
+            warnings = []
+
+            # Enhanced math normalization
+            normalized_text, normalization_warnings = self._normalize_math_text(raw_text)
+            warnings.extend(normalization_warnings)
+
+            needs_confirmation = confidence < settings.ASR_CONFIDENCE_THRESHOLD or len(warnings) > 0
+
+            return {
+                "raw_text": raw_text,
+                "normalized_text": normalized_text,
+                "text": normalized_text,
+                "confidence": confidence,
+                "warnings": warnings,
+                "needs_confirmation": needs_confirmation
+            }
+            
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(f"HuggingFace API error: {e.response.status_code} - {e.response.text}")
+        except Exception as e:
+            raise RuntimeError(f"ASR transcription failed: {str(e)}")
 
     def transcribe(self, audio_path: str) -> Dict[str, Any]:
+        """
+        Synchronous transcribe using HuggingFace Inference API.
+        """
         try:
-            result = self.model.transcribe(audio_path)
-        except FileNotFoundError as e:
-            raise RuntimeError(
-                "FFmpeg is not installed or not found in system PATH. "
-                "Please install FFmpeg to use audio transcription features."
-            ) from e
+            # Read audio file
+            with open(audio_path, "rb") as f:
+                audio_data = f.read()
+            
+            headers = {"Content-Type": "audio/wav"}
+            if self.hf_token:
+                headers["Authorization"] = f"Bearer {self.hf_token}"
+            
+            # Use synchronous client
+            with httpx.Client(timeout=60.0) as client:
+                response = client.post(
+                    self.HF_API_URL,
+                    headers=headers,
+                    content=audio_data,
+                )
+                
+                if response.status_code == 503:
+                    # Model is loading, wait and retry
+                    import time
+                    time.sleep(20)
+                    response = client.post(
+                        self.HF_API_URL,
+                        headers=headers,
+                        content=audio_data,
+                    )
+                
+                response.raise_for_status()
+                result = response.json()
+            
+            raw_text = result.get("text", "").strip()
+            confidence = 0.85  # HF API doesn't return confidence
+            warnings = []
 
-        raw_text = result.get("text", "").strip()
-        confidence = self._estimate_confidence(result)
-        warnings = []
+            # Enhanced math normalization
+            normalized_text, normalization_warnings = self._normalize_math_text(raw_text)
+            warnings.extend(normalization_warnings)
 
-        # Enhanced math normalization
-        normalized_text, normalization_warnings = self._normalize_math_text(raw_text)
-        warnings.extend(normalization_warnings)
+            needs_confirmation = confidence < settings.ASR_CONFIDENCE_THRESHOLD or len(warnings) > 0
 
-        needs_confirmation = confidence < settings.ASR_CONFIDENCE_THRESHOLD or len(warnings) > 0
-
-        return {
-            "raw_text": raw_text,
-            "normalized_text": normalized_text,
-            "text": normalized_text,  # Alias for compatibility
-            "confidence": confidence,
-            "warnings": warnings,
-            "needs_confirmation": needs_confirmation
-        }
-
-    def _estimate_confidence(self, result: Dict[str, Any]) -> float:
-        """
-        Whisper doesn't give a single confidence score.
-        We approximate using avg logprob and no_speech_prob.
-        """
-        segments = result.get("segments", [])
-        if not segments:
-            return 0.0
-
-        avg_logprob = sum(s.get("avg_logprob", -1.0) for s in segments) / len(segments)
-        no_speech_prob = sum(s.get("no_speech_prob", 0.0) for s in segments) / len(segments)
-
-        # heuristic scaling
-        confidence = max(0.0, min(1.0, 1 + avg_logprob - no_speech_prob))
-        return round(confidence, 2)
+            return {
+                "raw_text": raw_text,
+                "normalized_text": normalized_text,
+                "text": normalized_text,
+                "confidence": confidence,
+                "warnings": warnings,
+                "needs_confirmation": needs_confirmation
+            }
+            
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(f"HuggingFace API error: {e.response.status_code} - {e.response.text}")
+        except FileNotFoundError:
+            raise RuntimeError(f"Audio file not found: {audio_path}")
+        except Exception as e:
+            raise RuntimeError(f"ASR transcription failed: {str(e)}")
 
     def _build_replacement_rules(self) -> List[Tuple[str, str]]:
         """
@@ -76,7 +163,6 @@ class ASRService:
         rules = []
         
         # === NUMBERS AND BASIC OPERATIONS ===
-        # Spoken number words to digits
         number_words = {
             'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
             'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
@@ -90,8 +176,7 @@ class ASRService:
         for word, num in number_words.items():
             rules.append((rf'\b{word}\b', num))
         
-        # === CALCULUS OPERATIONS (most specific first) ===
-        # Integrals
+        # === CALCULUS OPERATIONS ===
         rules.extend([
             (r'\b(?:the\s+)?integral\s+of\s+log(?:arithm)?\s*(?:of\s+)?(\w+)\b', r'∫ log(\1) d\1'),
             (r'\b(?:the\s+)?integral\s+of\s+ln\s*(?:of\s+)?(\w+)\b', r'∫ ln(\1) d\1'),
@@ -265,4 +350,3 @@ class ASRService:
             normalized = normalized[0].upper() + normalized[1:]
         
         return normalized, warnings
-
